@@ -1,0 +1,48 @@
+-- CATÁLOGOS
+CREATE TABLE CatalogoRol (
+    id_rol INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre_rol TEXT NOT NULL
+);
+
+CREATE TABLE CatalogoEstado (
+    id_estado INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre_estado TEXT NOT NULL
+);
+
+-- TABLAS PRINCIPALES
+CREATE TABLE Usuario (
+    id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    id_rol INTEGER NOT NULL,
+    qr_token TEXT NOT NULL UNIQUE,
+    password TEXT,
+    FOREIGN KEY (id_rol) REFERENCES CatalogoRol(id_rol)
+);
+
+CREATE TABLE Membresia (
+    id_membresia INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_usuario INTEGER NOT NULL,
+    id_estado INTEGER NOT NULL,
+    fecha_vencimiento TEXT NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario),
+    FOREIGN KEY (id_estado) REFERENCES CatalogoEstado(id_estado)
+);
+
+CREATE TABLE BitacoraAcceso (
+    id_acceso INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_usuario INTEGER NOT NULL,
+    fecha_hora TEXT NOT NULL,
+    acceso_exitoso INTEGER NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)
+);
+
+-- Agregar un usuario (Nos servirá para crear tu cuenta de administrador)
+insertarUsuario:
+INSERT INTO Usuario (nombre, id_rol, qr_token, password)
+VALUES (?, ?, ?, ?);
+
+-- Verificar las credenciales en el Login
+verificarLogin:
+SELECT *
+FROM Usuario
+WHERE nombre = ? AND password = ?;
