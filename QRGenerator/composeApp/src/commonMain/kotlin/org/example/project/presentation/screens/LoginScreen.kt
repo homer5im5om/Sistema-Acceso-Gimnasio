@@ -62,6 +62,12 @@ class LoginScreen(val database: GymDatabase) : Screen {
             ) {
                 Text("Ingresar")
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextButton(onClick = { navigator.push(RegistroScreen(database)) }) {
+                Text("¿No tienes cuenta? Regístrate aquí")
+            }
         }
     }
 }
