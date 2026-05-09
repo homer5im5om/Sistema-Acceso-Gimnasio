@@ -46,3 +46,9 @@ verificarLogin:
 SELECT *
 FROM Usuario
 WHERE nombre = ? AND password = ?;
+
+-- Busca un usuario escaneando su token QR
+buscarPorToken:
+SELECT *
+FROM Usuario
+WHERE qr_token = ?;

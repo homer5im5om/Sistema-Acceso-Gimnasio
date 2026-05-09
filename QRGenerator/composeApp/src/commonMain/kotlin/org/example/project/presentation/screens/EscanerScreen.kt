@@ -19,6 +19,10 @@ class EscanerScreen(val database: GymDatabase) : Screen {
 
         var resultadoQr by remember { mutableStateOf("Apunta a un código QR...") }
 
+        // 1. Agrega esta variable hasta arriba de tu función Content(),
+// justo debajo de donde declaraste resultadoQr
+        var ultimoCodigoLeido by remember { mutableStateOf("") }
+
         // 1. Agregamos estas variables que la librería nos exige
         var linternaPrendida by remember { mutableStateOf(false) }
         var abrirGaleria by remember { mutableStateOf(false) }
@@ -41,8 +45,20 @@ class EscanerScreen(val database: GymDatabase) : Screen {
                     flashlightOn = linternaPrendida,
                     openImagePicker = abrirGaleria,
                     onCompletion = { codigoLeido ->
-                        resultadoQr = "¡Código atrapado!: $codigoLeido"
-                        println("Texto del QR: $codigoLeido")
+                        // Solo buscamos en la base de datos si es un código NUEVO
+                        if (codigoLeido != ultimoCodigoLeido) {
+                            ultimoCodigoLeido = codigoLeido // Guardamos el código para no repetirlo
+
+                            val usuario = database.gymDatabaseQueries.buscarPorToken(codigoLeido).executeAsOneOrNull()
+
+                            if (usuario != null) {
+                                resultadoQr = "Acceso Concedido: ${usuario.nombre}"
+                                println("Socio encontrado: ${usuario.nombre}")
+                            } else {
+                                resultadoQr = "Usuario no registrado"
+                                println("Token rechazado: $codigoLeido")
+                            }
+                        }
                     },
                     imagePickerHandler = { estado ->
                         abrirGaleria = estado
