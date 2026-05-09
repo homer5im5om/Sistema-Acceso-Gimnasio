@@ -6,8 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-// NUEVO: Importamos BackHandler para el botón físico del celular
-import androidx.activity.compose.BackHandler
+// Eliminamos el import de BackHandler que causaba el conflicto
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -24,13 +23,14 @@ class EscanerScreen(val database: GymDatabase) : Screen {
         var linternaPrendida by remember { mutableStateOf(false) }
         var abrirGaleria by remember { mutableStateOf(false) }
 
-        // NUEVO 1: Variable para encender/apagar la cámara
         var camaraActiva by remember { mutableStateOf(true) }
 
-        // NUEVO 2: Atrapamos el botón físico de "Atrás" del celular
-        BackHandler {
-            camaraActiva = false // Apagamos la cámara primero
-            navigator.pop()      // Luego salimos
+        // ESTA ES LA SOLUCIÓN MULTIPLATAFORMA:
+        // Le dice a la app que apague la cámara justo al destruir la pantalla
+        DisposableEffect(Unit) {
+            onDispose {
+                camaraActiva = false
+            }
         }
 
         Column(
@@ -43,7 +43,6 @@ class EscanerScreen(val database: GymDatabase) : Screen {
             Spacer(modifier = Modifier.height(24.dp))
 
             Box(modifier = Modifier.size(300.dp)) {
-                // NUEVO 3: Solo mostramos la cámara si camaraActiva es true
                 if (camaraActiva) {
                     QrScanner(
                         modifier = Modifier.fillMaxSize(),
@@ -56,10 +55,10 @@ class EscanerScreen(val database: GymDatabase) : Screen {
                                 val usuario = database.gymDatabaseQueries.buscarPorToken(codigoLeido).executeAsOneOrNull()
 
                                 if (usuario != null) {
-                                    resultadoQr = "Acceso Concedido: ${usuario.nombre}"
+                                    resultadoQr = "✅ Acceso Concedido: ${usuario.nombre}"
                                     println("Socio encontrado: ${usuario.nombre}")
                                 } else {
-                                    resultadoQr = "Usuario no registrado"
+                                    resultadoQr = "❌ Usuario no registrado"
                                     println("Token rechazado: $codigoLeido")
                                 }
                             }
@@ -72,7 +71,6 @@ class EscanerScreen(val database: GymDatabase) : Screen {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // NUEVO 4: El botón también apaga la cámara antes de salir
             Button(onClick = {
                 camaraActiva = false
                 navigator.pop()

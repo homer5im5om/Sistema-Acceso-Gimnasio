@@ -52,3 +52,8 @@ buscarPorToken:
 SELECT *
 FROM Usuario
 WHERE qr_token = ?;
+
+-- Obtiene la lista de todos los usuarios registrados
+obtenerTodosLosUsuarios:
+SELECT *
+FROM Usuario;

@@ -35,6 +35,12 @@ class DashboardScreen(val database: GymDatabase) : Screen {
             ) {
                 Text("Escanear Código QR")
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(onClick = { navigator.push(ListaSociosScreen(database)) }) {
+                Text("Ver Lista de Socios")
+            }
         }
     }
 }
