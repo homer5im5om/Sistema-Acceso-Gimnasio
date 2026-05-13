@@ -4,32 +4,43 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import org.example.project.data.GymDatabase
-import java.io.File // Don't forget this import!
+import java.io.File
 
 fun main() = application {
-    // 1. Check if the database file physically exists BEFORE connecting
-    val dbFile = File("gym.db")
+    // 1. Cambia el nombre en el File
+    val dbFile = File("gym_v2.db")
     val isNewDatabase = !dbFile.exists()
 
-    // 2. Connect the driver
-    val driver = JdbcSqliteDriver("jdbc:sqlite:gym.db")
+// 2. Cambia el nombre en la conexión
+    val driver = JdbcSqliteDriver("jdbc:sqlite:gym_v2.db")
 
-    // 3. ONLY create the schema (tables) if it's the very first time
     if (isNewDatabase) {
         GymDatabase.Schema.create(driver)
     }
 
-    // Initialize the database
     val database = GymDatabase(driver)
 
-    // Check if the "admin" user exists, if not, create it
+    // 1. LLENAR CATÁLOGOS SI ESTÁN VACÍOS
+    if (database.gymDatabaseQueries.contarRoles().executeAsOne() == 0L) {
+        database.gymDatabaseQueries.transaction {
+            database.gymDatabaseQueries.insertarRol(1, "Administrador")
+            database.gymDatabaseQueries.insertarRol(2, "Socio")
+
+            database.gymDatabaseQueries.insertarEstado(1, "Activo")
+            database.gymDatabaseQueries.insertarEstado(2, "Vencido")
+            database.gymDatabaseQueries.insertarEstado(3, "Suspendido")
+        }
+    }
+
+    // 2. CREAR ADMIN SI NO EXISTE
     val adminExists = database.gymDatabaseQueries.verificarLogin("admin", "123").executeAsList()
     if (adminExists.isEmpty()) {
         database.gymDatabaseQueries.insertarUsuario(
             nombre = "admin",
-            id_rol = 1,
+            password = "123",
             qr_token = "token_maestro",
-            password = "123"
+            id_rol = 1,
+            id_estado = 1
         )
     }
 

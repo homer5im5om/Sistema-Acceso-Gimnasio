@@ -55,8 +55,28 @@ class EscanerScreen(val database: GymDatabase) : Screen {
                                 val usuario = database.gymDatabaseQueries.buscarPorToken(codigoLeido).executeAsOneOrNull()
 
                                 if (usuario != null) {
-                                    resultadoQr = "✅ Acceso Concedido: ${usuario.nombre}"
-                                    println("Socio encontrado: ${usuario.nombre}")
+                                    // ¡AQUÍ EMPIEZA LA TRANSACCIÓN OBLIGATORIA DEL PROYECTO!
+                                    database.gymDatabaseQueries.transaction {
+                                        // Revisamos si el usuario tiene estado 1 (Activo)
+                                        val tieneAcceso = if (usuario.id_estado == 1L) 1L else 0L
+
+                                        // Guardamos el registro en la bitácora
+                                        // (Por ahora pondremos una fecha de prueba, luego le conectamos un reloj real)
+                                        database.gymDatabaseQueries.registrarAcceso(
+                                            id_usuario = usuario.id_usuario,
+                                            fecha_hora = "Acceso Reciente",
+                                            acceso_permitido = tieneAcceso
+                                        )
+
+                                        // Mostramos el resultado en pantalla dependiendo de su estado
+                                        if (tieneAcceso == 1L) {
+                                            resultadoQr = "✅ Acceso Concedido: ${usuario.nombre}"
+                                            println("Acceso registrado para: ${usuario.nombre}")
+                                        } else {
+                                            resultadoQr = "⚠️ Membresía Inactiva: ${usuario.nombre}"
+                                            println("Acceso denegado (inactivo) para: ${usuario.nombre}")
+                                        }
+                                    }
                                 } else {
                                     resultadoQr = "❌ Usuario no registrado"
                                     println("Token rechazado: $codigoLeido")

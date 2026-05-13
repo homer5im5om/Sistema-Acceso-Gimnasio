@@ -64,9 +64,10 @@ class RegistroScreen(val database: GymDatabase) : Screen {
                         try {
                             database.gymDatabaseQueries.insertarUsuario(
                                 nombre = nombre,
-                                id_rol = 2, // Le ponemos 2 porque 1 es Admin
+                                password = password,
                                 qr_token = tokenGenerado,
-                                password = password
+                                id_rol = 2,
+                                id_estado = 1 // 1 para cuenta activa
                             )
                             mensajeRegistro = "✅ Registro exitoso.\nTu Token es: $tokenGenerado\n¡Tómale captura!"
 
