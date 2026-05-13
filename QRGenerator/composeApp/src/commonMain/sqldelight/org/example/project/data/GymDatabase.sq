@@ -85,3 +85,21 @@ INSERT OR IGNORE INTO EstadoMembresia (id_estado, descripcion) VALUES (?, ?);
 
 contarRoles:
 SELECT COUNT(*) FROM Rol;
+
+-- ==========================================
+-- CRUD: Eliminar y Actualizar
+-- ==========================================
+
+-- Primero borramos sus accesos para que SQLite no marque error de llaves foráneas
+eliminarHistorialUsuario:
+DELETE FROM BitacoraAcceso WHERE id_usuario = ?;
+
+-- Luego ya podemos borrar al usuario de forma segura
+eliminarUsuario:
+DELETE FROM Usuario WHERE id_usuario = ?;
+
+-- Esta la usaremos en el siguiente paso para la pantalla de Edición
+actualizarUsuario:
+UPDATE Usuario
+SET nombre = ?, password = ?, id_estado = ?
+WHERE id_usuario = ?;
