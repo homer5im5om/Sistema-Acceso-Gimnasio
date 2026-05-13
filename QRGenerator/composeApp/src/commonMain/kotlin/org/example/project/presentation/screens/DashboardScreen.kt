@@ -41,6 +41,12 @@ class DashboardScreen(val database: GymDatabase) : Screen {
             Button(onClick = { navigator.push(ListaSociosScreen(database)) }) {
                 Text("Ver Lista de Socios")
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(onClick = { navigator.push(BitacoraScreen(database)) }) {
+                Text("Ver Bitácora de Accesos")
+            }
         }
     }
 }

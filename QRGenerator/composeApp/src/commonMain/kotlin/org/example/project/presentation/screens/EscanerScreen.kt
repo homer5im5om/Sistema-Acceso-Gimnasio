@@ -12,6 +12,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.example.project.data.GymDatabase
 import qrscanner.QrScanner
+import org.example.project.obtenerFechaHoraActual
 
 class EscanerScreen(val database: GymDatabase) : Screen {
     @Composable
@@ -60,11 +61,10 @@ class EscanerScreen(val database: GymDatabase) : Screen {
                                         // Revisamos si el usuario tiene estado 1 (Activo)
                                         val tieneAcceso = if (usuario.id_estado == 1L) 1L else 0L
 
-                                        // Guardamos el registro en la bitácora
-                                        // (Por ahora pondremos una fecha de prueba, luego le conectamos un reloj real)
+                                        // Guardamos el registro en la bitácora con la hora real
                                         database.gymDatabaseQueries.registrarAcceso(
                                             id_usuario = usuario.id_usuario,
-                                            fecha_hora = "Acceso Reciente",
+                                            fecha_hora = obtenerFechaHoraActual(), // <--- AQUÍ ESTÁ LA MAGIA
                                             acceso_permitido = tieneAcceso
                                         )
 
