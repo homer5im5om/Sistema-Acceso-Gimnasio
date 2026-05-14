@@ -103,3 +103,11 @@ actualizarUsuario:
 UPDATE Usuario
 SET nombre = ?, password = ?, id_estado = ?
 WHERE id_usuario = ?;
+
+obtenerUsuarioPorToken:
+SELECT * FROM Usuario WHERE qr_token = ?;
+
+-- Insertar un nuevo registro en la bitácora
+insertarAcceso:
+INSERT INTO BitacoraAcceso (id_usuario, fecha_hora, acceso_permitido)
+VALUES (?, ?, ?);

@@ -13,20 +13,16 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.example.project.data.GymDatabase
 import org.example.project.data.Usuario
-import org.example.project.presentation.viewmodels.ListaSociosViewModel // Importamos el ViewModel
+import org.example.project.presentation.viewmodels.ListaSociosViewModel
 
 class ListaSociosScreen(val database: GymDatabase) : Screen {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-
-        // 1. Instanciamos el ViewModel
         val viewModel = remember { ListaSociosViewModel(database) }
         val uiState by viewModel.uiState.collectAsState()
 
-        // 2. Efecto para recargar la lista siempre que entremos a esta pantalla
-        // (Muy útil por si venimos de editar a un usuario)
         LaunchedEffect(Unit) {
             viewModel.cargarUsuarios()
         }
@@ -37,15 +33,37 @@ class ListaSociosScreen(val database: GymDatabase) : Screen {
             Text("Lista de Socios", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
 
+            // ==========================================
+            // NEW: SEARCH BAR COMPONENT
+            // ==========================================
+            OutlinedTextField(
+                value = uiState.textoBusqueda,
+                onValueChange = { viewModel.actualizarBusqueda(it) },
+                label = { Text("Buscar por nombre o token QR") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
             LazyColumn(modifier = Modifier.weight(1f)) {
-                items(uiState.usuarios) { usuario ->
-                    TarjetaUsuario(
-                        usuario = usuario,
-                        // Le pasamos las acciones al ViewModel en lugar de manejar la base de datos aquí
-                        onEliminarClick = { viewModel.prepararEliminacion(usuario) },
-                        onEditarClick = { navigator.push(EditarSocioScreen(database, usuario)) }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                // Display a message if the search brings up 0 results
+                if (uiState.usuarios.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No se encontraron socios.",
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                } else {
+                    items(uiState.usuarios) { usuario ->
+                        TarjetaUsuario(
+                            usuario = usuario,
+                            onEliminarClick = { viewModel.prepararEliminacion(usuario) },
+                            onEditarClick = { navigator.push(EditarSocioScreen(database, usuario)) }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
 
@@ -58,9 +76,7 @@ class ListaSociosScreen(val database: GymDatabase) : Screen {
             }
         }
 
-        // ==========================================
-        // Ventana de Confirmación controlada por el UIState
-        // ==========================================
+        // Confirmation Dialog
         uiState.usuarioAEliminar?.let { usuario ->
             AlertDialog(
                 onDismissRequest = { viewModel.cancelarEliminacion() },

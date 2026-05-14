@@ -5,97 +5,117 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.example.project.data.GymDatabase
 import org.example.project.data.Usuario
+import org.example.project.presentation.viewmodels.EditarSocioViewModel
 
-class EditarSocioScreen(val database: GymDatabase, val usuarioAEditar: Usuario) : Screen {
+// La pantalla recibe la base de datos y el usuario que se va a editar
+class EditarSocioScreen(val database: GymDatabase, val usuario: Usuario) : Screen {
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
 
-        var nombre by remember { mutableStateOf(usuarioAEditar.nombre) }
-        var password by remember { mutableStateOf(usuarioAEditar.password) }
-        var estadoSeleccionado by remember { mutableStateOf(usuarioAEditar.id_estado) }
-        var expandido by remember { mutableStateOf(false) }
+        // Instanciamos el ViewModel
+        val viewModel = remember { EditarSocioViewModel(database) }
+        val uiState by viewModel.uiState.collectAsState()
 
-        val opcionesEstado = mapOf(1L to "Activo", 2L to "Vencido", 3L to "Suspendido")
+        // Inicializamos los campos con los datos actuales del usuario
+        var nombre by remember { mutableStateOf(usuario.nombre) }
+        var password by remember { mutableStateOf(usuario.password) }
+        var idEstado by remember { mutableStateOf(usuario.id_estado) }
+
+        // Efecto: Cuando se actualiza con éxito, regresamos a la lista
+        LaunchedEffect(uiState.actualizacionExitosa) {
+            if (uiState.actualizacionExitosa) {
+                navigator.pop()
+            }
+        }
 
         Column(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
+            modifier = Modifier.fillMaxSize().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Editar Socio", style = MaterialTheme.typography.headlineMedium)
+            Text("Editar Socio", style = MaterialTheme.typography.headlineMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Token QR: ${usuario.qr_token}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
             Spacer(modifier = Modifier.height(32.dp))
 
             OutlinedTextField(
                 value = nombre,
-                onValueChange = { nombre = it },
+                onValueChange = {
+                    nombre = it
+                    viewModel.limpiarError()
+                },
                 label = { Text("Nombre Completo") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(0.8f)
             )
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
-                label = { Text("Contraseña (PIN)") },
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    password = it
+                    viewModel.limpiarError()
+                },
+                label = { Text("Contraseña") },
+                modifier = Modifier.fillMaxWidth(0.8f)
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Selector de Estado de Membresía
-            ExposedDropdownMenuBox(
-                expanded = expandido,
-                onExpandedChange = { expandido = !expandido }
+            // SELECCIÓN DE ESTADO DE MEMBRESÍA
+            Text("Estado de Membresía:", style = MaterialTheme.typography.titleMedium)
+            Row(
+                modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                OutlinedTextField(
-                    readOnly = true,
-                    value = opcionesEstado[estadoSeleccionado] ?: "Desconocido",
-                    onValueChange = { },
-                    label = { Text("Estado de Membresía") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandido) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = expandido,
-                    onDismissRequest = { expandido = false }
-                ) {
-                    opcionesEstado.forEach { (id, descripcion) ->
-                        DropdownMenuItem(
-                            text = { Text(descripcion) },
-                            onClick = {
-                                estadoSeleccionado = id
-                                expandido = false
-                            }
-                        )
-                    }
+                // Activo
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = idEstado == 1L,
+                        onClick = { idEstado = 1L }
+                    )
+                    Text("Activo")
+                }
+                // Vencido
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = idEstado == 2L,
+                        onClick = { idEstado = 2L }
+                    )
+                    Text("Vencido")
+                }
+                // Suspendido
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = idEstado == 3L,
+                        onClick = { idEstado = 3L }
+                    )
+                    Text("Suspendido")
                 }
             }
-            Spacer(modifier = Modifier.height(32.dp))
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (uiState.mensajeError.isNotEmpty()) {
+                Text(
+                    text = uiState.mensajeError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             Button(
-                modifier = Modifier.fillMaxWidth().height(50.dp),
                 onClick = {
-                    if (nombre.isNotBlank() && password.isNotBlank()) {
-                        // Usamos la consulta actualizarUsuario que agregamos anteriormente
-                        database.gymDatabaseQueries.actualizarUsuario(
-                            nombre = nombre,
-                            password = password,
-                            id_estado = estadoSeleccionado,
-                            id_usuario = usuarioAEditar.id_usuario
-                        )
-                        navigator.pop() // Regresamos a la lista después de guardar
-                    }
-                }
+                    viewModel.actualizarUsuario(usuario.id_usuario, nombre, password, idEstado)
+                },
+                modifier = Modifier.fillMaxWidth(0.8f).height(50.dp)
             ) {
                 Text("Guardar Cambios")
             }

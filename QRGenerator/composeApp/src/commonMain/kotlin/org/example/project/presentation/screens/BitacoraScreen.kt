@@ -12,27 +12,30 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.example.project.data.GymDatabase
-import org.example.project.exportarAExcel // Importamos nuestra nueva función
+import org.example.project.presentation.viewmodels.BitacoraViewModel // Importamos el ViewModel
 
 class BitacoraScreen(val database: GymDatabase) : Screen {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val historial = remember { database.gymDatabaseQueries.obtenerHistorialAccesos().executeAsList() }
 
-        // Variable para mostrarle al usuario si se guardó bien el Excel
-        var mensajeExportacion by remember { mutableStateOf("") }
+        // 1. Instanciamos el ViewModel
+        val viewModel = remember { BitacoraViewModel(database) }
+
+        // 2. Observamos el estado reactivo
+        val uiState by viewModel.uiState.collectAsState()
 
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             Text("Historial de Accesos", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (historial.isEmpty()) {
+            if (uiState.historial.isEmpty()) {
                 Text("No hay registros de acceso todavía.", style = MaterialTheme.typography.bodyLarge)
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(historial) { registro ->
+                    // Usamos la lista que viene del UIState
+                    items(uiState.historial) { registro ->
                         Card(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -53,32 +56,17 @@ class BitacoraScreen(val database: GymDatabase) : Screen {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Mensaje de éxito o error al guardar
-            if (mensajeExportacion.isNotEmpty()) {
-                Text(text = mensajeExportacion, color = MaterialTheme.colorScheme.primary)
+            // Mostramos el mensaje (éxito/error) directamente desde el UIState
+            if (uiState.mensajeExportacion.isNotEmpty()) {
+                Text(text = uiState.mensajeExportacion, color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // BOTÓN DE EXPORTAR A EXCEL
+            // BOTÓN DE EXPORTAR A EXCEL (Ahora es "tonto", solo le avisa al ViewModel)
             Button(
-                onClick = {
-                    // 1. Armamos los encabezados de las columnas
-                    val encabezados = "ID Bitacora,Nombre del Socio,Fecha y Hora,Estado del Acceso\n"
-
-                    // 2. Transformamos la lista de la base de datos en filas de texto separadas por comas
-                    val filas = historial.joinToString("\n") { registro ->
-                        val estado = if (registro.acceso_permitido == 1L) "Concedido" else "Denegado"
-                        "${registro.id_bitacora},${registro.nombre},${registro.fecha_hora},$estado"
-                    }
-
-                    // PRO TIP: "\uFEFF" le dice a Excel que use formato UTF-8 para que lea bien los acentos
-                    val csvCompleto = "\uFEFF" + encabezados + filas
-
-                    // 3. Llamamos a nuestra función multiplataforma
-                    mensajeExportacion = exportarAExcel(csvCompleto, "Reporte_Accesos_Gym")
-                },
+                onClick = { viewModel.exportarHistorial() },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)) // Color verde Excel
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
             ) {
                 Text("Exportar a Excel (.csv)")
             }
