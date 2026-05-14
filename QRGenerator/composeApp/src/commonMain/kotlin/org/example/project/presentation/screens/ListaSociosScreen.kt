@@ -13,6 +13,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.example.project.data.GymDatabase
 import org.example.project.data.Usuario
+import org.example.project.presentation.viewmodels.ListaSociosViewModel // Importamos el ViewModel
 
 class ListaSociosScreen(val database: GymDatabase) : Screen {
 
@@ -20,11 +21,15 @@ class ListaSociosScreen(val database: GymDatabase) : Screen {
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
 
-        // Cambiamos a 'var' para poder recargar la lista visualmente cuando borremos a alguien
-        var listaUsuarios by remember { mutableStateOf(database.gymDatabaseQueries.obtenerTodosLosUsuarios().executeAsList()) }
+        // 1. Instanciamos el ViewModel
+        val viewModel = remember { ListaSociosViewModel(database) }
+        val uiState by viewModel.uiState.collectAsState()
 
-        // Estado para controlar si mostramos la ventanita de confirmación y a quién vamos a borrar
-        var usuarioAEliminar by remember { mutableStateOf<Usuario?>(null) }
+        // 2. Efecto para recargar la lista siempre que entremos a esta pantalla
+        // (Muy útil por si venimos de editar a un usuario)
+        LaunchedEffect(Unit) {
+            viewModel.cargarUsuarios()
+        }
 
         Column(
             modifier = Modifier.fillMaxSize().padding(16.dp)
@@ -32,13 +37,13 @@ class ListaSociosScreen(val database: GymDatabase) : Screen {
             Text("Lista de Socios", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Dentro de Content() en ListaSociosScreen
             LazyColumn(modifier = Modifier.weight(1f)) {
-                items(listaUsuarios) { usuario ->
+                items(uiState.usuarios) { usuario ->
                     TarjetaUsuario(
                         usuario = usuario,
-                        onEliminarClick = { usuarioAEliminar = usuario },
-                        onEditarClick = { navigator.push(EditarSocioScreen(database, usuario)) } // Navegamos a Editar
+                        // Le pasamos las acciones al ViewModel en lugar de manejar la base de datos aquí
+                        onEliminarClick = { viewModel.prepararEliminacion(usuario) },
+                        onEditarClick = { navigator.push(EditarSocioScreen(database, usuario)) }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -54,32 +59,23 @@ class ListaSociosScreen(val database: GymDatabase) : Screen {
         }
 
         // ==========================================
-        // REQUISITO: Confirmación de eliminación
+        // Ventana de Confirmación controlada por el UIState
         // ==========================================
-        usuarioAEliminar?.let { usuario ->
+        uiState.usuarioAEliminar?.let { usuario ->
             AlertDialog(
-                onDismissRequest = { usuarioAEliminar = null }, // Si tocan fuera de la ventana, se cancela
+                onDismissRequest = { viewModel.cancelarEliminacion() },
                 title = { Text("Confirmar Eliminación") },
                 text = { Text("¿Estás seguro de que deseas eliminar a ${usuario.nombre}? Esta acción también borrará su historial de accesos y no se puede deshacer.") },
                 confirmButton = {
                     Button(
-                        onClick = {
-                            // Usamos transacción porque afectamos dos tablas
-                            database.gymDatabaseQueries.transaction {
-                                database.gymDatabaseQueries.eliminarHistorialUsuario(usuario.id_usuario)
-                                database.gymDatabaseQueries.eliminarUsuario(usuario.id_usuario)
-                            }
-                            // Ocultamos la ventana y recargamos la lista
-                            usuarioAEliminar = null
-                            listaUsuarios = database.gymDatabaseQueries.obtenerTodosLosUsuarios().executeAsList()
-                        },
+                        onClick = { viewModel.confirmarEliminacion() },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
                         Text("Eliminar")
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { usuarioAEliminar = null }) {
+                    TextButton(onClick = { viewModel.cancelarEliminacion() }) {
                         Text("Cancelar")
                     }
                 }
@@ -100,7 +96,6 @@ fun TarjetaUsuario(usuario: Usuario, onEliminarClick: () -> Unit, onEditarClick:
                 Text(text = "Nombre: ${usuario.nombre}", style = MaterialTheme.typography.titleMedium)
                 Text(text = "Rol: ${if (usuario.id_rol == 1L) "Administrador" else "Socio"}", style = MaterialTheme.typography.bodyMedium)
 
-                // Mostramos el estado actual para que sea visible
                 val textoEstado = when(usuario.id_estado) {
                     1L -> "Activo"
                     2L -> "Vencido"
@@ -112,7 +107,6 @@ fun TarjetaUsuario(usuario: Usuario, onEliminarClick: () -> Unit, onEditarClick:
             }
 
             Row {
-                // Protegemos al admin principal para no editarlo ni borrarlo accidentalmente
                 if (usuario.id_rol != 1L) {
                     IconButton(onClick = onEditarClick) {
                         Text("✏️", style = MaterialTheme.typography.headlineSmall)

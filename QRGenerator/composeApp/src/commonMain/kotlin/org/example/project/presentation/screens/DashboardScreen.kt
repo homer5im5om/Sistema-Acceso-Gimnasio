@@ -10,11 +10,15 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.example.project.data.GymDatabase
+import org.example.project.data.Usuario // Make sure to import this!
+import androidx.compose.foundation.Image
+import qrgenerator.qrkitpainter.rememberQrKitPainter
+// O el import que te sugiera IntelliJ
+// 1. We now ask for the 'usuarioLogueado' (logged-in user)
+class DashboardScreen(val database: GymDatabase, val usuarioLogueado: Usuario) : Screen {
 
-class DashboardScreen(val database: GymDatabase) : Screen {
     @Composable
     override fun Content() {
-        // 1. Traemos el navegador de Voyager
         val navigator = LocalNavigator.currentOrThrow
 
         Column(
@@ -22,30 +26,77 @@ class DashboardScreen(val database: GymDatabase) : Screen {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("¡Bienvenido al Menú Principal!", style = MaterialTheme.typography.headlineMedium)
+            // Personalized welcome message
+            Text("¡Bienvenido, ${usuarioLogueado.nombre}!", style = MaterialTheme.typography.headlineMedium)
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // 2. Un botón grandote y vistoso para el escáner
-            Button(
-                onClick = {
-                    navigator.push(EscanerScreen(database))
-                },
-                modifier = Modifier.fillMaxWidth(0.7f).height(60.dp)
+            // ====================================================
+            // ROLE CONTROL LOGIC
+            // ====================================================
+            if (usuarioLogueado.id_rol == 1L) {
+                // ADMIN VIEW (Rol 1)
+                Text("Panel de Administrador", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { navigator.push(EscanerScreen(database)) },
+                    modifier = Modifier.fillMaxWidth(0.7f).height(60.dp)
+                ) {
+                    Text("Escanear Código QR")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = { navigator.push(ListaSociosScreen(database)) }) {
+                    Text("Ver Lista de Socios")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = { navigator.push(BitacoraScreen(database)) }) {
+                    Text("Ver Bitácora de Accesos")
+                }
+            } else {
+            // VIEW DEL SOCIO (Rol 2)
+            Text("Panel de Socio", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Text("Escanear Código QR")
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Tu Pase de Acceso", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // AQUÍ ESTÁ LA MAGIA DE QRKIT
+                    // Transformamos el string en una imagen QR real
+                    val qrPainter = rememberQrKitPainter(data = usuarioLogueado.qr_token)
+
+                    Image(
+                        painter = qrPainter,
+                        contentDescription = "Código QR del Socio",
+                        modifier = Modifier.size(220.dp) // Tamaño lo suficientemente grande para que lo lea la cámara
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = usuarioLogueado.qr_token,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Muestra este código en la entrada del gimnasio.", style = MaterialTheme.typography.bodySmall)
+                }
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            Button(onClick = { navigator.push(ListaSociosScreen(database)) }) {
-                Text("Ver Lista de Socios")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(onClick = { navigator.push(BitacoraScreen(database)) }) {
-                Text("Ver Bitácora de Accesos")
+            // Logout button for everyone
+            TextButton(onClick = { navigator.popAll() }) {
+                Text("Cerrar Sesión")
             }
         }
     }

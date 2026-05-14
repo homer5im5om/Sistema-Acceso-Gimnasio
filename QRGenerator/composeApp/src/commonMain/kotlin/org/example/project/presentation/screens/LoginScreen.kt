@@ -8,18 +8,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
-import org.example.project.data.GymDatabase
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import org.example.project.data.GymDatabase
+import org.example.project.presentation.viewmodels.LoginViewModel // Importamos nuestro ViewModel
 
-// 1. Tu clase ahora pide la base de datos para funcionar
 class LoginScreen(val database: GymDatabase) : Screen {
 
     @Composable
     override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+
+        // 1. Instanciamos nuestro ViewModel
+        val viewModel = remember { LoginViewModel(database) }
+
+        // 2. Observamos el UIState reactivo
+        val uiState by viewModel.uiState.collectAsState()
+
         var usuario by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
-        val navigator = LocalNavigator.currentOrThrow
+
+        // 3. Efecto Secundario: Si el ViewModel nos dice que ya hay usuario, navegamos
+        LaunchedEffect(uiState.usuarioLogueado) {
+            if (uiState.usuarioLogueado != null) {
+                navigator.push(DashboardScreen(database, uiState.usuarioLogueado!!))
+            }
+        }
 
         Column(
             modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -31,33 +45,39 @@ class LoginScreen(val database: GymDatabase) : Screen {
 
             OutlinedTextField(
                 value = usuario,
-                onValueChange = { usuario = it },
+                onValueChange = {
+                    usuario = it
+                    viewModel.limpiarError() // Le avisamos al ViewModel
+                },
                 label = { Text("Usuario") }
             )
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    viewModel.limpiarError() // Le avisamos al ViewModel
+                },
                 label = { Text("Contraseña") },
                 visualTransformation = PasswordVisualTransformation()
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Leemos el error directamente desde el estado del ViewModel
+            if (uiState.mensajeError.isNotEmpty()) {
+                Text(
+                    text = uiState.mensajeError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             Button(
                 onClick = {
-                    // AQUÍ ESTÁ LA MAGIA: Le preguntamos a SQL si existen estos datos
-                    val usuarioEncontrado = database.gymDatabaseQueries
-                        .verificarLogin(usuario, password)
-                        .executeAsOneOrNull() // executeAsOneOrNull trae 1 resultado exacto o se queda nulo
-
-                    if (usuarioEncontrado != null) {
-                        println("¡BINGO! Bienvenido, ${usuarioEncontrado.nombre}")
-                        // Esta es la magia de Voyager para cambiar de pantalla:
-                        navigator.push(DashboardScreen(database))
-                    } else {
-                        println("ERROR: Credenciales incorrectas")
-                    }
+                    // LA MAGIA MVVM: Solo le pasamos la chamba al ViewModel
+                    viewModel.verificarLogin(usuario, password)
                 }
             ) {
                 Text("Ingresar")
