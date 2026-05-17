@@ -35,8 +35,9 @@ kotlin {
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
 
-            implementation("cafe.adriel.voyager:voyager-navigator:1.0.0")
-            implementation("cafe.adriel.voyager:voyager-transitions:1.0.0")
+// Update the versions on these two lines:
+            implementation("cafe.adriel.voyager:voyager-navigator:1.1.0-beta02")
+            implementation("cafe.adriel.voyager:voyager-transitions:1.1.0-beta02")
 
             // Agrega estas 4 líneas para tu proyecto:
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
