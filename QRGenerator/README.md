@@ -36,5 +36,33 @@ in your IDE’s toolbar or run it directly from the terminal:
   ```
 
 ---
+# QRGenerator - Gimnasio
+
+## Descripción del Proyecto
+Sistema de Control de Acceso con Códigos QR desarrollado como una aplicación multiplataforma para Android y Desktop (JVM). Este sistema está diseñado para modernizar y asegurar el acceso a gimnasios y centros deportivos, eliminando los inconvenientes de las credenciales físicas tradicionales, como la lentitud en horas pico y la susceptibilidad al fraude.
+
+##  Características Principales
+* **Escaneo Inteligente:** Autenticación de socios mediante códigos QR únicos vinculados a su cuenta.
+* **Validación en Tiempo Real:** Verificación inmediata del estado de la membresía (Activo, Vencido, Suspendido).
+* **Control de Accesos:** Registro automático de cada intento de entrada (concedido o denegado) en una bitácora.
+* **Administración de Usuarios:** Gestión completa del catálogo de socios (alta, baja y modificación).
+* **Exportación de Datos:** Generación de reportes de acceso en formato CSV para análisis externo.
+
+## Arquitectura y Tecnologías
+El proyecto implementa el patrón de diseño **MVVM** (Model-View-ViewModel) combinado con **Kotlin Multiplatform (KMP)** para compartir la lógica de negocio entre plataformas.
+
+* **Interfaz de Usuario (UI):** Compose Multiplatform.
+* **Navegación:** Voyager (navegación declarativa).
+* **Base de Datos:** SQLite integrado con SQLDelight (ORM multiplataforma type-safe).
+* **Manejo de Estados:** Lifecycle ViewModel Compose y Coroutines.
+* **Lector QR:** QR-Kit para el acceso a la cámara y lectura de códigos.
+
+## Desarrolladores
+Proyecto desarrollado para la asignatura de Tópicos Avanzados de Programación por:
+* Cristian Alexis Lara Chavez
+* Santiago Magaña Martínez
+* Luis Eduardo Alvarado Alvarado
+* Edu Humberto Rosiles González
+
 
 Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
