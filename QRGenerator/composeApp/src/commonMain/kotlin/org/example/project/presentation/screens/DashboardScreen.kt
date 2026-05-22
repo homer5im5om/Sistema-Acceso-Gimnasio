@@ -92,6 +92,7 @@ class DashboardScreen(val database: GymDatabase, val usuarioLogueado: Usuario) :
             }
         }
 
+
             Spacer(modifier = Modifier.height(32.dp))
 
             // Logout button for everyone
