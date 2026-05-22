@@ -13,8 +13,7 @@ import org.example.project.data.GymDatabase
 import org.example.project.data.Usuario // Make sure to import this!
 import androidx.compose.foundation.Image
 import qrgenerator.qrkitpainter.rememberQrKitPainter
-// O el import que te sugiera IntelliJ
-// 1. We now ask for the 'usuarioLogueado' (logged-in user)
+// Pantalla principal post-login. Recibe el objeto completo del usuario autenticado
 class DashboardScreen(val database: GymDatabase, val usuarioLogueado: Usuario) : Screen {
 
     @Composable
@@ -69,8 +68,8 @@ class DashboardScreen(val database: GymDatabase, val usuarioLogueado: Usuario) :
                     Text("Tu Pase de Acceso", style = MaterialTheme.typography.titleLarge)
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // AQUÍ ESTÁ LA MAGIA DE QRKIT
-                    // Transformamos el string en una imagen QR real
+                    // AQUÍ ESTÁ LA MAGIA DE QRKIT.
+                    // Transformamos el string en una imagen QR real.
                     val qrPainter = rememberQrKitPainter(data = usuarioLogueado.qr_token)
 
                     Image(
@@ -81,6 +80,7 @@ class DashboardScreen(val database: GymDatabase, val usuarioLogueado: Usuario) :
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Muestra el token en texto por si el admin necesita ingresarlo manualmente.
                     Text(
                         text = usuarioLogueado.qr_token,
                         style = MaterialTheme.typography.labelLarge,
@@ -94,7 +94,7 @@ class DashboardScreen(val database: GymDatabase, val usuarioLogueado: Usuario) :
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Logout button for everyone
+            // Botón de cierre de sesión disponible para ambos roles.
             TextButton(onClick = { navigator.popAll() }) {
                 Text("Cerrar Sesión")
             }
