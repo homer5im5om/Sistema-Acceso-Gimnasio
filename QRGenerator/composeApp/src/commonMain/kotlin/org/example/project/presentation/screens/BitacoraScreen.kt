@@ -14,6 +14,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import org.example.project.data.GymDatabase
 import org.example.project.presentation.viewmodels.BitacoraViewModel // Importamos el ViewModel
 
+// Pantalla del historial de accesos al gimnasio.
 class BitacoraScreen(val database: GymDatabase) : Screen {
 
     @Composable
@@ -31,6 +32,7 @@ class BitacoraScreen(val database: GymDatabase) : Screen {
             Spacer(modifier = Modifier.height(16.dp))
 
             if (uiState.historial.isEmpty()) {
+                //si aún no se ha escaneado ningún QR.
                 Text("No hay registros de acceso todavía.", style = MaterialTheme.typography.bodyLarge)
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
@@ -44,6 +46,8 @@ class BitacoraScreen(val database: GymDatabase) : Screen {
                                 Text(text = "Socio: ${registro.nombre}", style = MaterialTheme.typography.titleMedium)
                                 Text(text = "Fecha: ${registro.fecha_hora}", style = MaterialTheme.typography.bodyMedium)
 
+
+                                // El color y el texto cambian según si el acceso fue concedido o no.
                                 val colorEstado = if (registro.acceso_permitido == 1L) Color(0xFF4CAF50) else Color(0xFFF44336)
                                 val textoEstado = if (registro.acceso_permitido == 1L) "✅ Acceso Concedido" else "❌ Acceso Denegado"
 
