@@ -1,5 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+// import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -7,13 +7,13 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
-    id("app.cash.sqldelight") version "2.3.2" // <--- Agrega esta línea
+    id("app.cash.sqldelight") version "2.0.1" // <--- Agrega esta línea
 }
 
 kotlin {
     androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+        compilations.all {
+            kotlinOptions.jvmTarget = "11"
         }
     }
 
@@ -23,7 +23,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
-            implementation("app.cash.sqldelight:android-driver:2.3.2")
+            implementation("app.cash.sqldelight:android-driver:2.0.1")
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -33,14 +33,17 @@ kotlin {
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
 
-// Update the versions on these two lines:
+            // Librería para gráficos en KMP
+            implementation("io.github.koalaplot:koalaplot-core:0.5.3")
+
+            // Update the versions on these two lines:
             implementation("cafe.adriel.voyager:voyager-navigator:1.1.0-beta02")
             implementation("cafe.adriel.voyager:voyager-transitions:1.1.0-beta02")
 
             // Agrega estas 4 líneas para tu proyecto:
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.8.3")
-            implementation("app.cash.sqldelight:coroutines-extensions:2.3.2")
+            implementation("app.cash.sqldelight:coroutines-extensions:2.0.1")
             implementation("network.chaintech:qr-kit:2.0.0")
         }
         commonTest.dependencies {
@@ -49,7 +52,7 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
-            implementation("app.cash.sqldelight:sqlite-driver:2.3.2")
+            implementation("app.cash.sqldelight:sqlite-driver:2.0.1")
         }
     }
 }
