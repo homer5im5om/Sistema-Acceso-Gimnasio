@@ -111,3 +111,22 @@ SELECT * FROM Usuario WHERE qr_token = ?;
 insertarAcceso:
 INSERT INTO BitacoraAcceso (id_usuario, fecha_hora, acceso_permitido)
 VALUES (?, ?, ?);
+
+-- Obtener el conteo de usuarios agrupados por su estado de membresía
+obtenerEstadisticasEstados:
+SELECT id_estado, COUNT(*) AS total
+FROM Usuario
+GROUP BY id_estado;
+
+-- Para las métricas
+contarSociosTotales:
+SELECT COUNT(*) FROM Usuario WHERE id_rol != 1; -- Excluye administradores
+
+-- Obtener los 4 socios con más asistencias
+obtenerTopSocios:
+SELECT Usuario.nombre, COUNT(BitacoraAcceso.id_bitacora) AS total_asistencias
+FROM BitacoraAcceso
+INNER JOIN Usuario ON BitacoraAcceso.id_usuario = Usuario.id_usuario
+GROUP BY Usuario.id_usuario
+ORDER BY total_asistencias DESC
+LIMIT 4;

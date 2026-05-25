@@ -1,5 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+// import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -13,14 +13,12 @@ plugins {
 kotlin {
     androidTarget {
         compilations.all {
-            kotlinOptions {
-                jvmTarget = "11"
-            }
+            kotlinOptions.jvmTarget = "11"
         }
     }
-    
+
     jvm()
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
@@ -35,7 +33,10 @@ kotlin {
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
 
-// Update the versions on these two lines:
+            // Librería para gráficos en KMP
+            implementation("io.github.koalaplot:koalaplot-core:0.5.3")
+
+            // Update the versions on these two lines:
             implementation("cafe.adriel.voyager:voyager-navigator:1.1.0-beta02")
             implementation("cafe.adriel.voyager:voyager-transitions:1.1.0-beta02")
 
